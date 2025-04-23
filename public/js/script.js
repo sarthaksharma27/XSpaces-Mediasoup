@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (createSpaceBtn) {
     createSpaceBtn.addEventListener("click", () => {
       
-      window.location.href = "/login.html";
+      window.location.href = "/signup.html";
     });
   }
 });

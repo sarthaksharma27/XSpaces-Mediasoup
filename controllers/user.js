@@ -1,29 +1,38 @@
-const User = require('../models/user')
-const {setUser} = require('../service/auth')
+import prisma from '../prisma/client.js';
+import { setUser } from '../services/auth.js';
 
 async function handleUserSignup(req, res) {
-    const { name, email, password } = req.body;
-    await User.create({
-        name,
-        email,
-        password,
-    })
-    return res.redirect("/main")
+    const { username, email, password } = req.body;
+    
+    await prisma.user.create({
+        data: {
+            username,
+            email,
+            password,
+        },
+    });
+
+    return res.redirect("/login.html");
 }
 
 async function handleUserLogin(req, res) {
-    const { email, password } = req.body
-    const user = await User.findOne({email, password})
-    if(!user) return res.render("login", {
-        error: "Invalid Username or Password"
-    })
+    const { email, password } = req.body;
 
-    const token = setUser(user)
-    res.cookie("uid", token)
-    res.redirect("/doc")
+    const user = await prisma.user.findFirst({
+        where: {
+            email,
+            password,
+        },
+    });
+
+    if (!user) {
+        console.error(`User not found for email: ${email}. Invalid credentials.`);
+        return res.redirect("/login.html");  
+    }
+
+    const token = setUser(user);
+    res.cookie("uid", token);
+    res.redirect("/home");
 }
 
-module.exports = {
-    handleUserSignup,
-    handleUserLogin,
-}
+export { handleUserSignup, handleUserLogin };

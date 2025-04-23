@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spaces - Home</title>
+    <link rel="stylesheet" href="../public/css/home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">X</div>
+            <ul class="main-menu">
+                <li><a href="#" class="active"><i class="fas fa-home"></i> <span>Home</span></a></li>
+                <li><a href="#"><i class="fas fa-search"></i> <span>Explore</span></a></li>
+                <li><a href="#"><i class="fas fa-bell"></i> <span>Notifications</span></a></li>
+                <li><a href="#"><i class="fas fa-envelope"></i> <span>Messages</span></a></li>
+                <li><a href="#"><i class="fas fa-microphone"></i> <span>Spaces</span></a></li>
+                <li><a href="#"><i class="fas fa-user"></i> <span>Profile</span></a></li>
+            </ul>
+            <button class="btn-create-space" id="createSpaceBtn">
+                <i class="fas fa-plus"></i> <span>Create Space</span>
+            </button>
+            <div class="profile">
+                <div class="profile-img">
+                    <img src="/api/placeholder/40/40" alt="Profile">
+                </div>
+                <div class="profile-info">
+                    <div class="profile-name">User Name</div>
+                    <div class="profile-username">@username</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header>
+                Spaces
+            </header>
+
+            <!-- Live Spaces -->
+            <div class="spaces-section">
+                <h2 class="spaces-heading">Live Spaces</h2>
+                <div class="spaces-list" id="liveSpacesList">
+                    <!-- Spaces will be added here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Upcoming Spaces -->
+            <div class="spaces-section">
+                <h2 class="spaces-heading">Upcoming Spaces</h2>
+                <div class="spaces-list" id="upcomingSpacesList">
+                    <!-- Spaces will be added here by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Trending Section -->
+        <div class="trending">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search...">
+            </div>
+
+            <div class="trending-section">
+                <h2 class="trending-heading">Trends for you</h2>
+                <div class="trending-item">
+                    <div class="trending-category">Technology · Trending</div>
+                    <div class="trending-tag">#WebDevelopment</div>
+                    <div class="trending-count">5,283 posts</div>
+                </div>
+                <div class="trending-item">
+                    <div class="trending-category">Technology · Trending</div>
+                    <div class="trending-tag">#JavaScript</div>
+                    <div class="trending-count">3,421 posts</div>
+                </div>
+                <div class="trending-item">
+                    <div class="trending-category">Programming · Trending</div>
+                    <div class="trending-tag">#BackendDev</div>
+                    <div class="trending-count">2,718 posts</div>
+                </div>
+            </div>
+
+            <div class="trending-section">
+                <h2 class="trending-heading">Who to follow</h2>
+                <!-- Add follow suggestions here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Space Modal -->
+    <div id="createSpaceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Create a Space</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="createSpaceForm">
+                <div class="form-group">
+                    <label for="spaceTitle" class="form-label">Name your Space</label>
+                    <input type="text" id="spaceTitle" class="form-input" placeholder="What's this Space about?" required>
+                </div>
+                <div class="form-group">
+                    <label for="spaceDescription" class="form-label">Add a description</label>
+                    <input type="text" id="spaceDescription" class="form-input" placeholder="Give people a description of your Space">
+                </div>
+                <div class="form-group">
+                    <label for="spaceDate" class="form-label">When's it happening?</label>
+                    <input type="datetime-local" id="spaceDate" class="form-input" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-start-space">Start your Space</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="../public/js/home.js"></script>
+</body>
+</html>

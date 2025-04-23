@@ -1,25 +1,29 @@
-const express = require('express');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
+
 const app = express();
-const path = require('path');
 const PORT = process.env.PORT || 3000;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
-// const userRouter = require("./routes/userRoute")
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Import routers
+import staticRouter from './routes/staticRouter.js';
+import userRouter from './routes/userRouter.js';
+import restrictToLoggedinUserOnly from './middleware/user.js';
+import homeRouter from './routes/homeRouter.js';
 
-// app.get('/signup', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'public', 'signup.html'));
-//   });
-  
-//   app.get('/login', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'public', 'login.html'));
-//   });  
-
-// app.use("/user", userRouter)
+// Use routers
+app.use('/', staticRouter);
+app.use('/user', userRouter);
+app.use('/home', restrictToLoggedinUserOnly, homeRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
