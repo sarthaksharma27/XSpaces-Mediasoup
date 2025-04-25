@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spaces</title>
+    <link rel="stylesheet" href="../public/css/spaces.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="logo">Spaces</a>
+            <div>
+                <a href="/profile" class="nav-link">Profile</a>
+                <a href="/spaces/create" class="nav-link">Create Space</a>
+            </div>
+        </div>
+        
+        <div class="spaces-list">
+            <!-- Loop through spaces and display each one -->
+            <% spaces.forEach(function(space) { %>
+                <div class="space-card">
+                    <h2 class="space-title"><%= space.title %></h2>
+                    <p class="space-description"><%= space.description %></p>
+                    <p class="space-host">Host: <%= space.host.username %></p>
+                    <p class="space-created-at">Created on: <%= space.createdAt.toLocaleDateString() %></p>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+</body>
+</html>

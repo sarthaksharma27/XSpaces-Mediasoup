@@ -1,13 +1,8 @@
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { handleHome } from '../controllers/handleHome.js'; 
 
 const router = express.Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
-router.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../protected/home.html'));
-});
+router.get('/', handleHome);
 
 export default router;
