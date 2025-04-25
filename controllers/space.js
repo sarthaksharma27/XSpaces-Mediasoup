@@ -12,7 +12,7 @@ async function createSpace(req, res) {
         },
     });
     
-    res.render("space")
+    res.render("spaces")
 }
 
 export { createSpace };

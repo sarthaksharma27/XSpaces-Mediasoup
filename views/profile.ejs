@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | Spaces</title>
+    <link rel="stylesheet" href="/css/profile.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/profile.css">
+</head>
+<body>
+    <div class="background-animation">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <a href="/" class="logo">Spaces</a>
+            <div>
+                <a href="/profile" class="nav-link active">Profile</a>
+                <a href="#" class="nav-link create-button">Create Space</a>
+            </div>
+        </div>
+
+        <% if (user) { %>
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="avatar">
+                    <% if (user.username && user.username.length > 0) { %>
+                        <span><%= user.username.charAt(0).toUpperCase() %></span>
+                    <% } else { %>
+                        <span>U</span>
+                    <% } %>
+                </div>
+                <h1 class="profile-title">Your Profile</h1>
+            </div>
+
+            <!-- Profile Information Section -->
+            <div class="profile-section">
+                <h2 class="section-title">Account Information</h2>
+                <form action="/profile/update" method="POST" class="profile-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" value="<%= user.username || '' %>" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" value="<%= user.email || '' %>" required />
+                    </div>
+                    
+                    <div class="profile-action">
+                        <button type="submit" class="update-btn">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Delete Account Section -->
+            <div class="profile-section danger-zone">
+                <h2 class="section-title danger-title">Delete Account</h2>
+                <p class="danger-text">Warning: This action cannot be undone. All your data will be permanently deleted.</p>
+                <button id="delete-account-btn" class="delete-btn">Delete Account</button>
+            </div>
+
+            <!-- User Spaces Section -->
+            <div class="profile-section">
+                <h2 class="section-title">Your Spaces</h2>
+                <% if (user.spaces && user.spaces.length > 0) { %>
+                    <ul>
+                        <% user.spaces.forEach(function(space) { %>
+                            <li>
+                                <h3><%= space.title %></h3>
+                                <p><%= space.description %></p>
+                                
+                                <!-- Delete Space Form -->
+                                <form action="/spaces/<%= space.id %>/delete" method="POST">
+                                    <!-- Method Override: DELETE -->
+                                    <input type="hidden" name="_method" value="DELETE" />
+                                    <button type="submit" class="delete-space-btn">Delete Space</button>
+                                </form>
+                            </li>
+                        <% }); %>
+                    </ul>
+                <% } else { %>
+                    <p>You have not created any spaces yet.</p>
+                <% } %>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <div id="delete-modal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Confirm Account Deletion</h2>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+                        <p>Please type your password to confirm:</p>
+                        <% if (locals.deleteError) { %>
+                            <div class="alert alert-error">
+                                <%= deleteError %>
+                            </div>
+                        <% } %>
+                        <form action="/profile/delete?_method=DELETE" method="POST">
+                            <div class="form-group">
+                              <input type="password" id="confirm-delete-password" name="password" required placeholder="Enter your password" />
+                            </div>
+                            <div class="modal-actions">
+                              <button type="button" class="cancel-btn">Cancel</button>
+                              <button type="submit" class="confirm-delete-btn">Delete Account</button>
+                            </div>
+                          </form>                                   
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% } else { %>
+        <div class="login-redirect">
+            <div class="login-message">
+                <h2>Please log in to view your profile</h2>
+                <p>You need to be logged in to access your profile information.</p>
+                <div class="login-actions">
+                    <a href="/login" class="login-btn">Log In</a>
+                    <a href="/signup" class="signup-btn">Sign Up</a>
+                </div>
+            </div>
+        </div>
+        <% } %>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle create space button
+            const createButton = document.querySelector('.create-button');
+            createButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '/spaces/create';
+            });
+
+            // Handle delete account modal
+            const deleteBtn = document.getElementById('delete-account-btn');
+            const deleteModal = document.getElementById('delete-modal');
+            const closeModal = document.querySelector('.close-modal');
+            const cancelBtn = document.querySelector('.cancel-btn');
+
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function() {
+                    deleteModal.classList.remove('hidden');
+                });
+            }
+
+            function hideModal() {
+                if (deleteModal) {
+                    deleteModal.classList.add('hidden');
+                }
+            }
+
+            if (closeModal) {
+                closeModal.addEventListener('click', hideModal);
+            }
+            
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', hideModal);
+            }
+
+            // Close modal when clicking outside
+            if (deleteModal) {
+                deleteModal.addEventListener('click', function(e) {
+                    if (e.target === deleteModal) {
+                        hideModal();
+                    }
+                });
+            }
+
+            // Password confirmation check
+            const passwordForm = document.querySelector('form[action="/profile/password"]');
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', function(e) {
+                    const newPassword = document.getElementById('new-password').value;
+                    const confirmPassword = document.getElementById('confirm-password').value;
+                    
+                    if (newPassword !== confirmPassword) {
+                        e.preventDefault();
+                        alert('Passwords do not match!');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
