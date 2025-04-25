@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spaces</title>
-    <link rel="stylesheet" href="../public/css/spaces.css">
+    <link rel="stylesheet" href="/css/spaces.css">
 </head>
 <body>
     <div class="container">
@@ -17,15 +17,8 @@
         </div>
         
         <div class="spaces-list">
-            <!-- Loop through spaces and display each one -->
-            <% spaces.forEach(function(space) { %>
-                <div class="space-card">
-                    <h2 class="space-title"><%= space.title %></h2>
-                    <p class="space-description"><%= space.description %></p>
-                    <p class="space-host">Host: <%= space.host.username %></p>
-                    <p class="space-created-at">Created on: <%= space.createdAt.toLocaleDateString() %></p>
-                </div>
-            <% }); %>
+            
+           
         </div>
     </div>
 </body>

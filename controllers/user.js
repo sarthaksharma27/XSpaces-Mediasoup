@@ -12,7 +12,7 @@ async function handleUserSignup(req, res) {
         },
     });
 
-    return res.redirect("/login.html");
+    return res.render("login");
 }
 
 async function handleUserLogin(req, res) {
@@ -27,12 +27,12 @@ async function handleUserLogin(req, res) {
 
     if (!user) {
         console.error(`User not found for email: ${email}. Invalid credentials.`);
-        return res.redirect("/login.html");  
+        return res.render("signup")  
     }
 
     const token = setUser(user);
     res.cookie("uid", token);
-    res.redirect("/home")
+    res.redirect("/spaces")
 }
 
 export { handleUserSignup, handleUserLogin };

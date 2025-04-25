@@ -1,8 +1,8 @@
 import express from 'express';
-import { handleHome } from '../controllers/handleHome.js'; 
+import { handleSpace } from '../controllers/space.js'; 
 
 const router = express.Router();
 
-router.get('/', handleHome);
+router.get('/', handleSpace);
 
 export default router;

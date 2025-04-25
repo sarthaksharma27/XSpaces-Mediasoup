@@ -2,15 +2,15 @@ import express from 'express';
 const router = express.Router();
 
 router.get("/", (req, res) => {
-  res.redirect("/index.html");
+  res.render("index");
 });
 
 router.get("/signup", (req, res) => {
-    res.redirect("/signup.html");
+    res.render("signup");
 });
 
 router.get("/login", (req, res) => {
-    res.redirect("/login.html");
+    res.render("login");
 });
 
 export default router;
