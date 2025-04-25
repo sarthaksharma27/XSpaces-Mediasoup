@@ -1,8 +1,12 @@
 import express from 'express';
-import { handleSpace } from '../controllers/space.js'; 
+import { createSpace } from '../controllers/space.js';
 
 const router = express.Router();
 
-router.get('/', handleSpace);
+router.get('/', (req, res) => {
+  res.render("spaces");
+});
+
+router.post('/', createSpace);
 
 export default router;

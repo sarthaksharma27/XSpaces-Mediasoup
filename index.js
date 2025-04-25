@@ -28,7 +28,7 @@ import spaceRouter from './routes/spaceRouter.js';
 // Use routers
 app.use('/', staticRouter);
 app.use('/user', userRouter);
-app.use('/spaces', restrictToLoggedinUserOnly, spaceRouter);
+app.use('/space', restrictToLoggedinUserOnly, spaceRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);

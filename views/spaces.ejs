@@ -15,10 +15,17 @@
                 <a href="/spaces/create" class="nav-link">Create Space</a>
             </div>
         </div>
-        
-        <div class="spaces-list">
-            
-           
+
+        <div>
+            <form action="/spaces" method="POST">
+                <label for="title">Title:</label><br />
+                <input type="text" id="title" name="title" required /><br /><br />
+              
+                <label for="description">Description:</label><br />
+                <textarea id="description" name="description" rows="4" cols="50"></textarea><br /><br />
+              
+                <button type="submit">Create Space</button>
+            </form>              
         </div>
     </div>
 </body>
