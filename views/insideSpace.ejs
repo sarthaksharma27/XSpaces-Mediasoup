@@ -50,6 +50,18 @@
                     
                 </div>
             </div>
+            <div class="participant">
+                <div class="participant-avatar">
+                    <img src="<%= space.host.avatar || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmcW4-whPG3rG562_FR1Ry2aZHsvB_YIH3Ag&s' %>" alt="<%= host.username %>">
+                </div>                
+                <div class="participant-info">
+                    <div class="participant-name"><%= host.username %></div>
+                    <div class="participant-username">
+                        @<%= host.username %>
+                        <span class="host-badge">Host</span>
+                    </div>
+                </div>
+            </div>
 
             <!-- Space controls -->
             <div class="space-controls">
