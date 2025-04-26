@@ -1,6 +1,7 @@
 import express from 'express';
 import { createSpace } from '../controllers/space.js';
 import prisma from '../prisma/client.js';
+import {join, leave} from '../controllers/participant.js';
 
 const router = express.Router();
 
@@ -27,5 +28,9 @@ router.get('/:id', async (req, res) => {
 
   res.render("insideSpace", { space, host: space.host });
 });
+
+router.post('/:id/join', join); 
+router.post('/:id/leave', leave);
+// router.get('/:id/participants', getAllParticipants);
 
 export default router;
