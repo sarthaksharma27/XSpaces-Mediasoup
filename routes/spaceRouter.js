@@ -12,4 +12,17 @@ router.get('/', async(req, res) => {
 
 router.post('/', createSpace);
 
+router.get('/:id', async(req, res) => {
+  const spaceId = req.params.id
+  const space = await prisma.space.findUnique({
+    where: { id: spaceId },
+  });
+
+  if (!space) {
+    return res.status(404).send('Space not found');
+  }
+
+  res.render("insideSpace", { space });
+})
+
 export default router;

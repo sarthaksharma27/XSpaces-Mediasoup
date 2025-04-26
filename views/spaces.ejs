@@ -28,13 +28,15 @@
         <div class="spaces-list">
             <% if (spaces && spaces.length > 0) { %>
                 <% spaces.forEach(function(space) { %>
-                    <div class="space-card">
+                    <a href="/space/<%= space.id %>" style="text-decoration: none; color: inherit;">
+                      <div class="space-card" style="cursor: pointer;">
                         <h2 class="space-title"><%= space.title %></h2>
                         <p class="space-description"><%= space.description %></p>
                         <p class="space-host">Host: <%= space.hostId %></p>
                         <p class="space-created-at">Created on: <%= new Date(space.createdAt).toLocaleDateString() %></p>
-                    </div>
-                <% }); %>
+                      </div>
+                    </a>
+                  <% }); %>                  
             <% } else { %>
                 <!-- Display a demo space if no spaces are available in the database -->
                 <div class="space-card demo-space">

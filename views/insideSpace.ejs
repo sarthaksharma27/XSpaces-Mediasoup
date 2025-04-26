@@ -1,0 +1,79 @@
+<!-- spaces.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Space | Your Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/css/insideSpace.css">
+</head>
+<body>
+    <div class="background-animation">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+    </div>
+
+    <div class="container">
+        <div class="space-container">
+            <!-- Space Header with Live indicator -->
+            <div class="space-header">
+                <div class="space-header-left">
+                    <div class="live-indicator">LIVE</div>
+                </div>
+                <div class="space-actions">
+                    <button class="space-action-btn">
+                        <span class="icon icon-more"></span>
+                    </button>
+                    <button class="end-btn">End</button>
+                </div>
+            </div>
+
+            <!-- Collapse button -->
+            <div class="space-collapse">
+                <span class="icon icon-chevron-down"></span>
+            </div>
+
+            <!-- Space title/info -->
+            <div class="space-details">
+                <h2 class="space-title"><%= space.title %></h2>
+            </div>
+
+            <!-- Host section -->
+            <div class="participants-section">
+                <div class="host-section">
+                    <div class="section-label">
+                        <span>Host</span>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <!-- Space controls -->
+            <div class="space-controls">
+                <button class="control-btn">
+                    <span class="icon icon-mic-off"></span>
+                </button>
+                <button class="control-btn">
+                    <span class="icon icon-people"></span>
+                </button>
+                <button class="control-btn">
+                    <span class="icon icon-chat"></span>
+                </button>
+                <button class="control-btn">
+                    <span class="icon icon-share"></span>
+                </button>
+                <button class="control-btn">
+                    <span class="icon icon-heart"></span>
+                </button>
+            </div>
+
+            <!-- Mic status -->
+            <div class="mic-status">Mic is off</div>
+        </div>
+    </div>
+    <script src="/js/insideSpace.js"></script>
+</body>
+</html>
