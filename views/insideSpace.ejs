@@ -86,10 +86,10 @@
             <div class="mic-status">Mic is off</div>
         </div>
     </div>
-    <form action="/space/:id/join" method="post">
-         <button>Join</button>
-    </form>
-    <form action="/space/:id/leave" method="post">
+    <form action="/space/<%= space.id %>/join" method="post">
+        <button>Join</button>
+    </form>    
+    <form action="/space/<%= space.id %>/leave" method="post">
         <button>Leave</button>
     </form>
     <script src="/js/insideSpace.js"></script>

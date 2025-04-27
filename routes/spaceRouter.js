@@ -1,7 +1,8 @@
 import express from 'express';
 import { createSpace } from '../controllers/space.js';
 import prisma from '../prisma/client.js';
-import {join, leave} from '../controllers/participant.js';
+// import { join, leave} from '../controllers/participant.js';
+import { joinSpace, leaveSpace } from '../services/participantService.js';
 
 const router = express.Router();
 
@@ -28,9 +29,25 @@ router.get('/:id', async (req, res) => {
 
   res.render("insideSpace", { space, host: space.host });
 });
+ 
+router.post('/:id/join', async (req, res) => {
+  const spaceId = req.params.id;
+  const userId = req.user.id;
+  const role = req.body.role || 'listener';
+  await joinSpace(spaceId, userId, role);
+  res.status(200).send(`User ${userId} joined as ${role}`);
+});
 
-router.post('/:id/join', join); 
-router.post('/:id/leave', leave);
+
+router.post('/:id/leave', async(req, res) => {
+  const spaceId = req.params.id;
+  const userId = req.user.id;
+  await leaveSpace(spaceId, userId);
+  res.status(200).send(`User ${userId} left the space`);
+});
+
+// router.post('/:id/join', join);
+// router.post('/:id/leave', leave);
 // router.get('/:id/participants', getAllParticipants);
 
 export default router;
