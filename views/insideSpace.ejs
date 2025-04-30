@@ -1,4 +1,3 @@
-<!-- spaces.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,7 +46,6 @@
                     <div class="section-label">
                         <span>Host</span>
                     </div>
-                    
                 </div>
             </div>
             <div class="participant">
@@ -65,9 +63,11 @@
 
             <!-- Space controls -->
             <div class="space-controls">
-                <button class="control-btn">
-                    <span class="icon icon-mic-off"></span>
-                </button>
+                <% if (user.id === host.id) { %>
+                    <button class="control-btn">
+                        <span class="icon icon-mic-off"></span>
+                    </button>
+                <% } %>
                 <button class="control-btn">
                     <span class="icon icon-people"></span>
                 </button>
@@ -86,12 +86,14 @@
             <div class="mic-status">Mic is off</div>
         </div>
     </div>
+
     <form action="/space/<%= space.id %>/join" method="post">
         <button>Join</button>
     </form>    
     <form action="/space/<%= space.id %>/leave" method="post">
         <button>Leave</button>
     </form>
+
     <script src="/js/insideSpace.js"></script>
 </body>
 </html>

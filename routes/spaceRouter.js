@@ -27,7 +27,7 @@ router.get('/:id', async (req, res) => {
     return res.status(404).send('Space not found');
   }
 
-  res.render("insideSpace", { space, host: space.host });
+  res.render("insideSpace", { space, host: space.host, user: req.user });
 });
  
 router.post('/:id/join', async (req, res) => {
