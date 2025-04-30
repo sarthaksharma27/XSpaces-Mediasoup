@@ -1,23 +1,3 @@
-  // Sample data for the space
-  const spaceData = {
-    title: "test space",
-    isLive: true
-};
-
-const hostData = {
-    name: "Sarthak",
-    username: "sarthak",
-    avatar: "/images/avatar.jpg" // Path to your avatar image
-};
-
-// Sample listeners data if needed
-const listenersData = [
-    // Add listener objects here if needed
-];
-
-// You could use these in your backend to render the EJS template
-// In a real app, this would come from your server
-
 document.addEventListener('DOMContentLoaded', function() {
     // Collapse button functionality
     const collapseBtn = document.querySelector('.space-collapse');
@@ -29,19 +9,40 @@ document.addEventListener('DOMContentLoaded', function() {
         participantsSection.classList.toggle('hidden');
     });
 
+    // Store mic stream
+    let micStream = null;
+
     // Control buttons functionality
     const controlBtns = document.querySelectorAll('.control-btn');
     controlBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', async function() {
             this.classList.toggle('active');
-            
+
             // Handle mic button specifically
             if (this.querySelector('.icon-mic-off')) {
                 const micStatus = document.querySelector('.mic-status');
                 if (this.classList.contains('active')) {
                     micStatus.textContent = 'Mic is on';
+
+                    try {
+                        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        console.log('Microphone stream:', micStream);
+
+                        // You can do further processing or send this stream to the mediasoup server later
+                    } catch (error) {
+                        console.error('Error accessing microphone:', error);
+                        micStatus.textContent = 'Mic access denied';
+                    }
+
                 } else {
                     micStatus.textContent = 'Mic is off';
+
+                    // Stop all tracks if mic is turned off
+                    if (micStream) {
+                        micStream.getTracks().forEach(track => track.stop());
+                        micStream = null;
+                        console.log('Microphone stream stopped.');
+                    }
                 }
             }
         });
