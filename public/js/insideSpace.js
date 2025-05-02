@@ -64,3 +64,7 @@ socket.on('connect', () => {
   console.log('Connected to server via WebSocket:', socket.id);
 });
 
+socket.on('routerRtpCapabilities', (routerRtpCapabilities) => {
+    console.log('Router RTP Capabilities:', routerRtpCapabilities);
+});
+

@@ -7,6 +7,7 @@ import { dirname } from 'path';
 import methodOverride from 'method-override';
 import http from 'http';
 import { Server } from 'socket.io';
+import { createMediasoupWorker, getRouterRtpCapabilities } from './mediasoupServer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,9 +42,21 @@ app.use('/profile', restrictToLoggedinUserOnly, profileRouter);
 
 // WebSocket connection
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  console.log('A user connected');
+
+  // Send the router RTP capabilities when the client connects
+  socket.emit('routerRtpCapabilities', getRouterRtpCapabilities());
+
+  socket.on('disconnect', () => {
+      console.log('A user disconnected');
+  });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server is listening on port ${PORT}`);
-});
+const startServer = async () => {
+  await createMediasoupWorker(); 
+  server.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+  });
+};
+
+startServer();
