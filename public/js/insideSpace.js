@@ -57,3 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+const socket = io(); 
+
+socket.on('connect', () => {
+  console.log('Connected to server via WebSocket:', socket.id);
+});
+

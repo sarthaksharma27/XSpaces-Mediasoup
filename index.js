@@ -5,11 +5,16 @@ import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import methodOverride from 'method-override';
+import http from 'http';
+import { Server } from 'socket.io';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+const server = http.createServer(app);           
+const io = new Server(server);                   
+
 const PORT = process.env.PORT || 3000;
 
 app.set('view engine', 'ejs');
@@ -32,8 +37,13 @@ import profileRouter from './routes/profileRouter.js';
 app.use('/', staticRouter);
 app.use('/user', userRouter);
 app.use('/space', restrictToLoggedinUserOnly, spaceRouter);
-app.use('/profile', restrictToLoggedinUserOnly, profileRouter)
+app.use('/profile', restrictToLoggedinUserOnly, profileRouter);
 
-app.listen(PORT, () => {
+// WebSocket connection
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+});
+
+server.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
