@@ -7,7 +7,7 @@ import { dirname } from 'path';
 import methodOverride from 'method-override';
 import http from 'http';
 import { Server } from 'socket.io';
-import { createMediasoupWorker, getRouterRtpCapabilities } from './mediasoupServer.js';
+import { createMediasoupWorker, getRouterRtpCapabilities, createWebRtcTransport } from './mediasoupServer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -47,15 +47,25 @@ io.on('connection', (socket) => {
   // Send the router RTP capabilities when the client connects
   socket.emit('routerRtpCapabilities', getRouterRtpCapabilities());
 
+  // Listen for transport creation request from the client
+  socket.on('createSendTransport', async () => {
+    console.log('Client requested to create a send transport');
+
+    // Request the server to create the WebRtcTransport and send back transport parameters
+    await createWebRtcTransport(socket);
+
+    console.log('Send transport creation completed');
+  });
+
   socket.on('disconnect', () => {
-      console.log('A user disconnected');
+    console.log('A user disconnected');
   });
 });
 
 const startServer = async () => {
   await createMediasoupWorker(); 
   server.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
   });
 };
 
