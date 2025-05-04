@@ -7,17 +7,26 @@ import { dirname } from 'path';
 import methodOverride from 'method-override';
 import http from 'http';
 import { Server } from 'socket.io';
-import { createMediasoupWorker, getRouterRtpCapabilities, createWebRtcTransport } from './mediasoupServer.js';
+
+import {
+  createMediasoupWorker,
+  getRouterRtpCapabilities,
+  createWebRtcTransport,
+  connectTransport,
+  handleProducer,
+  getTransportById,
+  addProducer,
+} from './mediasoupServer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const server = http.createServer(app);           
-const io = new Server(server);                   
-
+const server = http.createServer(app);
+const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 
+// View and middleware setup
 app.set('view engine', 'ejs');
 app.set('views', './views');
 app.use(express.static(path.join(__dirname, 'public')));
@@ -27,45 +36,81 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(methodOverride('_method'));
 
-// Import routers
+// Routes
 import staticRouter from './routes/staticRouter.js';
 import userRouter from './routes/userRouter.js';
 import restrictToLoggedinUserOnly from './middleware/user.js';
 import spaceRouter from './routes/spaceRouter.js';
 import profileRouter from './routes/profileRouter.js';
 
-// Use routers
 app.use('/', staticRouter);
 app.use('/user', userRouter);
 app.use('/space', restrictToLoggedinUserOnly, spaceRouter);
 app.use('/profile', restrictToLoggedinUserOnly, profileRouter);
 
-// WebSocket connection
+// WebSocket handlers
 io.on('connection', (socket) => {
-  console.log('A user connected');
+  console.log('User connected:', socket.id);
 
-  // Send the router RTP capabilities when the client connects
+  // Step 1: Send RTP Capabilities
   socket.emit('routerRtpCapabilities', getRouterRtpCapabilities());
 
-  // Listen for transport creation request from the client
+  // Step 2: Create send transport
   socket.on('createSendTransport', async () => {
-    console.log('Client requested to create a send transport');
-
-    // Request the server to create the WebRtcTransport and send back transport parameters
+    console.log('Client requested send transport');
     await createWebRtcTransport(socket);
-
-    console.log('Send transport creation completed');
+    console.log('Send transport setup complete');
   });
 
+  // Step 3: Handle DTLS connection
+  socket.on('connectTransport', async ({ transportId, dtlsParameters }) => {
+    const transport = getTransportById(transportId);
+    if (!transport) {
+      return socket.emit('transportConnectError', 'Transport not found');
+    }
+
+    try {
+      await transport.connect({ dtlsParameters });
+      console.log('Transport connected:', transportId);
+      socket.emit('transportConnected');
+    } catch (err) {
+      console.error('Transport connect error:', err);
+      socket.emit('transportConnectError', err.message);
+    }
+  });
+
+  // Step 4: Handle track production
+  socket.on('produce', async ({ transportId, kind, rtpParameters, appData }, callback) => {
+    console.log('Received produce request');
+
+    const transport = getTransportById(transportId);
+    if (!transport) {
+      console.error('Transport not found for produce');
+      return;
+    }
+
+    try {
+      const producer = await transport.produce({ kind, rtpParameters, appData });
+      console.log('Producer created:', producer.id);
+
+      addProducer(socket.id, producer);
+      callback({ id: producer.id });
+    } catch (error) {
+      console.error('Error creating producer:', error);
+    }
+  });
+
+  // Cleanup on disconnect
   socket.on('disconnect', () => {
-    console.log('A user disconnected');
+    console.log('User disconnected:', socket.id);
   });
 });
 
+// Server startup
 const startServer = async () => {
-  await createMediasoupWorker(); 
+  await createMediasoupWorker();
   server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server running at http://localhost:${PORT}`);
   });
 };
 

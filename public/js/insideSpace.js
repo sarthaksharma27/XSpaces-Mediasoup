@@ -1,48 +1,17 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Collapse/Expand UI logic
     const collapseBtn = document.querySelector('.space-collapse');
     const spaceDetails = document.querySelector('.space-details');
     const participantsSection = document.querySelector('.participants-section');
+    const micStatus = document.querySelector('.mic-status');
+    const controlBtns = document.querySelectorAll('.control-btn');
 
+    // UI: Collapse/Expand toggle
     if (collapseBtn && spaceDetails && participantsSection) {
         collapseBtn.addEventListener('click', function () {
             spaceDetails.classList.toggle('hidden');
             participantsSection.classList.toggle('hidden');
         });
     }
-
-    // Mic toggle logic
-    let micStream = null;
-    const controlBtns = document.querySelectorAll('.control-btn');
-
-    controlBtns.forEach(btn => {
-        btn.addEventListener('click', async function () {
-            this.classList.toggle('active');
-            const micStatus = document.querySelector('.mic-status');
-
-            const isMicButton = this.querySelector('.icon-mic-off') !== null;
-
-            if (isMicButton) {
-                if (this.classList.contains('active')) {
-                    micStatus.textContent = 'Mic is on';
-                    try {
-                        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                        console.log('Microphone stream started:', micStream);
-                    } catch (error) {
-                        console.error('Error accessing microphone:', error);
-                        micStatus.textContent = 'Mic access denied';
-                    }
-                } else {
-                    micStatus.textContent = 'Mic is off';
-                    if (micStream) {
-                        micStream.getTracks().forEach(track => track.stop());
-                        micStream = null;
-                        console.log('Microphone stream stopped.');
-                    }
-                }
-            }
-        });
-    });
 
     // End space button
     const endBtn = document.querySelector('.end-btn');
@@ -56,17 +25,47 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // WebSocket connection
     const socket = io();
-
     socket.on('connect', () => {
         console.log('Connected to server via WebSocket:', socket.id);
     });
 
+    let micStream = null;
     let device;
     let sendTransport;
 
-    // Handle RTP Capabilities
+    // Mic toggle logic
+    controlBtns.forEach(btn => {
+        btn.addEventListener('click', async function () {
+            this.classList.toggle('active');
+            const isMicButton = this.querySelector('.icon-mic-off') !== null;
+
+            if (isMicButton) {
+                if (this.classList.contains('active')) {
+                    micStatus.textContent = 'Mic is on';
+                    try {
+                        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        console.log('Microphone stream started');
+
+                        if (sendTransport) startProducingMicTrack();
+                    } catch (error) {
+                        console.error('Error accessing microphone:', error);
+                        micStatus.textContent = 'Mic access denied';
+                    }
+                } else {
+                    micStatus.textContent = 'Mic is off';
+                    if (micStream) {
+                        micStream.getTracks().forEach(track => track.stop());
+                        micStream = null;
+                        console.log('Microphone stream stopped');
+                    }
+                }
+            }
+        });
+    });
+
+    // Step 1: Get RTP Capabilities from server
     socket.on('routerRtpCapabilities', async (routerRtpCapabilities) => {
-        console.log('Received Router RTP Capabilities:', routerRtpCapabilities);
+        console.log('Received router RTP capabilities');
         await loadMediasoupDevice(routerRtpCapabilities);
     });
 
@@ -74,16 +73,14 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             device = new mediasoupClient.Device();
             await device.load({ routerRtpCapabilities });
-            console.log('Mediasoup Device loaded:', device.rtpCapabilities);
-
-            // Once device is ready, request a transport
+            console.log('Mediasoup device loaded');
             socket.emit('createSendTransport');
         } catch (error) {
-            console.error('Failed to load Mediasoup device:', error);
+            console.error('Failed to load device', error);
         }
     }
 
-    // Receive transport info from server and create send transport
+    // Step 2: Create send transport
     socket.on('sendTransportCreated', async (data) => {
         const { id, iceParameters, iceCandidates, dtlsParameters } = data;
 
@@ -94,7 +91,61 @@ document.addEventListener('DOMContentLoaded', function () {
             dtlsParameters,
         });
 
-        console.log('Send transport created on client:', sendTransport);
+        console.log('Send transport created');
+
+        // Step 3: DTLS handshake
+        sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
+            console.log('Sending DTLS parameters to server...');
+            socket.emit('connectTransport', {
+                transportId: sendTransport.id,
+                dtlsParameters,
+            });
+
+            socket.once('transportConnected', () => {
+                console.log('Transport connected');
+                callback();
+            });
+
+            socket.once('transportConnectError', (error) => {
+                console.error('DTLS connection error:', error);
+                errback(error);
+            });
+        });
+
+        // Step 4: Produce event handler
+        sendTransport.on('produce', (parameters, callback, errback) => {
+            console.log('Sending produce request to server...');
+            socket.emit('produce', {
+                transportId: sendTransport.id,
+                kind: parameters.kind,
+                rtpParameters: parameters.rtpParameters,
+                appData: parameters.appData,
+            }, ({ id }) => {
+                console.log('Producer ID received from server:', id);
+                callback({ id });
+            });
+        });
+
+        // Auto-produce if mic is already active
+        if (micStream) startProducingMicTrack();
     });
 
+    // Step 5: Send audio track to server
+    async function startProducingMicTrack() {
+        const audioTrack = micStream.getAudioTracks()[0];
+        try {
+            const producer = await sendTransport.produce({
+                track: audioTrack,
+                codecOptions: {
+                    opusStereo: true,
+                    opusDtx: true,
+                },
+            });
+
+            console.log('Started producing audio track');
+            micStatus.textContent = 'Mic is streaming...';
+        } catch (err) {
+            console.error('Error producing audio track:', err);
+        }
+    }
 });
