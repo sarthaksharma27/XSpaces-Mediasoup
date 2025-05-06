@@ -99,7 +99,10 @@
           <button>Leave</button>
         </form>
       <% } %>      
-    
+
+      <script>
+        window.IS_HOST = <%- JSON.stringify(user.id === host.id) %>;
+      </script>      
     <script src="/js/mediasoup-client.bundle.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/insideSpace.js"></script>

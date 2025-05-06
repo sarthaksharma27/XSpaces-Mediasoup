@@ -13,16 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // End space button
-    const endBtn = document.querySelector('.end-btn');
-    if (endBtn) {
-        endBtn.addEventListener('click', function () {
-            if (confirm('Are you sure you want to end this space?')) {
-                window.location.href = '/spaces';
-            }
-        });
-    }
-
     // WebSocket connection
     const socket = io();
     socket.on('connect', () => {
@@ -32,6 +22,25 @@ document.addEventListener('DOMContentLoaded', function () {
     let micStream = null;
     let device;
     let sendTransport;
+
+    // ⬇️ Moved function here
+    async function startProducingMicTrack() {
+        const audioTrack = micStream.getAudioTracks()[0];
+        try {
+            const producer = await sendTransport.produce({
+                track: audioTrack,
+                codecOptions: {
+                    opusStereo: true,
+                    opusDtx: true,
+                },
+            });
+
+            console.log('Started producing audio track');
+            micStatus.textContent = 'Mic is streaming...';
+        } catch (err) {
+            console.error('Error producing audio track:', err);
+        }
+    }
 
     // Mic toggle logic
     controlBtns.forEach(btn => {
@@ -80,72 +89,55 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Step 2: Create send transport
-    socket.on('sendTransportCreated', async (data) => {
-        const { id, iceParameters, iceCandidates, dtlsParameters } = data;
+    if (window.IS_HOST) {
+        // Step 2: Create send transport
+        socket.on('sendTransportCreated', async (data) => {
+            const { id, iceParameters, iceCandidates, dtlsParameters } = data;
 
-        sendTransport = device.createSendTransport({
-            id,
-            iceParameters,
-            iceCandidates,
-            dtlsParameters,
-        });
-
-        console.log('Send transport created');
-
-        // Step 3: DTLS handshake
-        sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
-            console.log('Sending DTLS parameters to server...');
-            socket.emit('connectTransport', {
-                transportId: sendTransport.id,
+            sendTransport = device.createSendTransport({
+                id,
+                iceParameters,
+                iceCandidates,
                 dtlsParameters,
             });
 
-            socket.once('transportConnected', () => {
-                console.log('Transport connected');
-                callback();
+            console.log('Send transport created');
+
+            // Step 3: DTLS handshake
+            sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
+                console.log('Sending DTLS parameters to server...');
+                socket.emit('connectTransport', {
+                    transportId: sendTransport.id,
+                    dtlsParameters,
+                });
+
+                socket.once('transportConnected', () => {
+                    console.log('Transport connected');
+                    callback();
+                });
+
+                socket.once('transportConnectError', (error) => {
+                    console.error('DTLS connection error:', error);
+                    errback(error);
+                });
             });
 
-            socket.once('transportConnectError', (error) => {
-                console.error('DTLS connection error:', error);
-                errback(error);
+            // Step 4: Produce event handler
+            sendTransport.on('produce', (parameters, callback, errback) => {
+                console.log('Sending produce request to server...');
+                socket.emit('produce', {
+                    transportId: sendTransport.id,
+                    kind: parameters.kind,
+                    rtpParameters: parameters.rtpParameters,
+                    appData: parameters.appData,
+                }, ({ id }) => {
+                    console.log('Producer ID received from server:', id);
+                    callback({ id });
+                });
             });
+
+            // Auto-produce if mic is already active
+            if (micStream) startProducingMicTrack();
         });
-
-        // Step 4: Produce event handler
-        sendTransport.on('produce', (parameters, callback, errback) => {
-            console.log('Sending produce request to server...');
-            socket.emit('produce', {
-                transportId: sendTransport.id,
-                kind: parameters.kind,
-                rtpParameters: parameters.rtpParameters,
-                appData: parameters.appData,
-            }, ({ id }) => {
-                console.log('Producer ID received from server:', id);
-                callback({ id });
-            });
-        });
-
-        // Auto-produce if mic is already active
-        if (micStream) startProducingMicTrack();
-    });
-
-    // Step 5: Send audio track to server
-    async function startProducingMicTrack() {
-        const audioTrack = micStream.getAudioTracks()[0];
-        try {
-            const producer = await sendTransport.produce({
-                track: audioTrack,
-                codecOptions: {
-                    opusStereo: true,
-                    opusDtx: true,
-                },
-            });
-
-            console.log('Started producing audio track');
-            micStatus.textContent = 'Mic is streaming...';
-        } catch (err) {
-            console.error('Error producing audio track:', err);
-        }
     }
 });
