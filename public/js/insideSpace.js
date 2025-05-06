@@ -139,5 +139,69 @@ document.addEventListener('DOMContentLoaded', function () {
             // Auto-produce if mic is already active
             if (micStream) startProducingMicTrack();
         });
+
+    } else {
+        let recvTransport;
+
+        // Step 2: Request to create receive transport
+        socket.emit('createRecvTransport');
+
+        socket.on('recvTransportCreated', async ({ id, iceParameters, iceCandidates, dtlsParameters }) => {
+            recvTransport = device.createRecvTransport({
+                id,
+                iceParameters,
+                iceCandidates,
+                dtlsParameters,
+            });
+
+            console.log('Receive transport created');
+
+            // Step 3: DTLS handshake
+            recvTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
+                console.log('Sending DTLS parameters for recv transport...');
+                socket.emit('connectTransport', {
+                    transportId: recvTransport.id,
+                    dtlsParameters,
+                });
+
+                socket.once('transportConnected', () => {
+                    console.log('Recv transport connected');
+                    callback();
+                });
+
+                socket.once('transportConnectError', (error) => {
+                    console.error('DTLS recv connection error:', error);
+                    errback(error);
+                });
+            });
+
+            // Step 4: Request to consume
+            socket.emit('consume', {
+                rtpCapabilities: device.rtpCapabilities,
+            });
+        });
+
+        socket.on('consumeSuccess', async ({ id, producerId, kind, rtpParameters }) => {
+            console.log('Consumer parameters received from server');
+
+            const consumer = await recvTransport.consume({
+                id,
+                producerId,
+                kind,
+                rtpParameters,
+            });
+
+            const audioElement = document.createElement('audio');
+            audioElement.srcObject = new MediaStream([consumer.track]);
+            audioElement.autoplay = true;
+            audioElement.playsInline = true;
+            document.body.appendChild(audioElement);
+
+            console.log('Audio is playing from producer');
+        });
+
+        socket.on('consumeError', (err) => {
+            console.error('Error consuming:', err);
+        });
     }
 });

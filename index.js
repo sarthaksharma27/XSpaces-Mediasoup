@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
   // Step 2: Create send transport
   socket.on('createSendTransport', async () => {
     console.log('Client requested send transport');
-    await createWebRtcTransport(socket);
+    await createWebRtcTransport(socket, 'send'); 
     console.log('Send transport setup complete');
   });
 
@@ -100,10 +100,43 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Here is the conusmer code //////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////
+
+  // Step 2: Create send transport
+  socket.on('createRecvTransport', async () => {
+    console.log('Client requested recv transport');
+    await createWebRtcTransport(socket, 'recv'); 
+    console.log('recv transport setup complete');
+  });
+
+  // Step 3: DTLS handshake for recvTransport (Consumer Side)
+  socket.on('connectTransport', async ({ transportId, dtlsParameters }) => {
+  const transport = getTransportById(transportId);
+  
+    if (!transport) {
+        console.error('Transport not found for ID:', transportId);
+        return socket.emit('transportConnectError', 'Transport not found');
+    }
+
+    try {
+        await transport.connect({ dtlsParameters });
+        console.log('Transport connected via DTLS:', transportId);
+
+        socket.emit('transportConnected');
+    } catch (err) {
+        console.error('Transport connection failed:', err);
+        socket.emit('transportConnectError', err.message);
+    }
+  });
+
+
+
   // Cleanup on disconnect
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
+
 });
 
 // Server startup

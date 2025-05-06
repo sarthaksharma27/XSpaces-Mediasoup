@@ -31,24 +31,44 @@ const getRouterRtpCapabilities = () => {
   return router.rtpCapabilities;
 };
 
-// Create a WebRTC transport for the client
-const createWebRtcTransport = async (socket) => {
+const createWebRtcTransport = async (socket, transportType) => { 
   try {
-    const transport = await router.createWebRtcTransport({
+    const transportOptions = {
       listenIps: [{ ip: '0.0.0.0', announcedIp: '127.0.0.1' }],
       enableUdp: true,
       enableTcp: true,
       preferUdp: true,
-    });
+    };
 
-    transports.set(socket.id, transport);
+    let transport;
 
-    socket.emit('sendTransportCreated', {
-      id: transport.id,
-      iceParameters: transport.iceParameters,
-      iceCandidates: transport.iceCandidates,
-      dtlsParameters: transport.dtlsParameters,
-    });
+    if (transportType === 'send') {
+      transport = await router.createWebRtcTransport(transportOptions);
+      transports.set(`${socket.id}_send`, transport);
+
+      socket.emit('sendTransportCreated', {
+        id: transport.id,
+        iceParameters: transport.iceParameters,
+        iceCandidates: transport.iceCandidates,
+        dtlsParameters: transport.dtlsParameters,
+      });
+
+      console.log('Send transport created for socket', socket.id);
+    } else if (transportType === 'recv') {
+      transport = await router.createWebRtcTransport(transportOptions);
+      transports.set(`${socket.id}_recv`, transport);
+
+      socket.emit('recvTransportCreated', {
+        id: transport.id,
+        iceParameters: transport.iceParameters,
+        iceCandidates: transport.iceCandidates,
+        dtlsParameters: transport.dtlsParameters,
+      });
+
+      console.log('Receive transport created for socket', socket.id);
+    } else {
+      console.error('Invalid transport type');
+    }
   } catch (err) {
     console.error('Error creating WebRTC transport:', err);
   }
