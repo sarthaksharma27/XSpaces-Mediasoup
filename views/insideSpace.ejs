@@ -89,12 +89,14 @@
         </div>
     </div>
 
-    <form action="/space/<%= space.id %>/join" method="post">
-        <button>Join</button>
-    </form>    
-    <form action="/space/<%= space.id %>/leave" method="post">
-        <button>Leave</button>
-    </form>
+    <% if (user.id !== host.id) { %>
+        <form action="/space/<%= space.id %>/join" method="post">
+          <button>Join</button>
+        </form>    
+        <form action="/space/<%= space.id %>/leave" method="post">
+          <button>Leave</button>
+        </form>
+      <% } %>      
     
     <script src="/js/mediasoup-client.bundle.js"></script>
     <script src="/socket.io/socket.io.js"></script>
