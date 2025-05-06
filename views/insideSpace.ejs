@@ -26,9 +26,11 @@
                     <button class="space-action-btn">
                         <span class="icon icon-more"></span>
                     </button>
+                    <% if (user.id == host.id) { %>
                     <form action="/space/<%= space.id %>/destroy?_method=DELETE" method="POST">
                         <button class="end-btn">End</button>
-                      </form>                      
+                      </form> 
+                    <% } %>           
                 </div>
             </div>
 
