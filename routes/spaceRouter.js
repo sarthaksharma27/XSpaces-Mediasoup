@@ -46,6 +46,30 @@ router.post('/:id/leave', async(req, res) => {
   res.status(200).send(`User ${userId} left the space`);
 });
 
+router.delete('/:id/destroy', async (req, res) => {
+  const spaceId = req.params.id;
+  const userId = req.user.id;
+  try {
+    // Ensure the logged-in user is the host (owner) of the space
+    const space = await prisma.space.findUnique({
+      where: { id: spaceId },
+    });
+
+    if (space.hostId !== userId) {
+      return res.status(403).json({ error: "You are not authorized to delete this space." });
+    }
+
+    await prisma.space.delete({
+      where: { id: spaceId },
+    });
+
+    res.render("spaces")
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete space.' });
+  }
+});
+
+
 // router.post('/:id/join', join);
 // router.post('/:id/leave', leave);
 // router.get('/:id/participants', getAllParticipants);

@@ -26,7 +26,9 @@
                     <button class="space-action-btn">
                         <span class="icon icon-more"></span>
                     </button>
-                    <button class="end-btn">End</button>
+                    <form action="/space/<%= space.id %>/destroy?_method=DELETE" method="POST">
+                        <button class="end-btn">End</button>
+                      </form>                      
                 </div>
             </div>
 
