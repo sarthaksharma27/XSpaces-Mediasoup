@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const socket = io();
     socket.on('connect', () => {
         console.log('Connected to server via WebSocket:', socket.id);
+        socket.emit('join-space', { spaceId: 'xyz-123' });
     });
 
     let micStream = null;
@@ -106,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Step 3: DTLS handshake
             sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
                 console.log('Sending DTLS parameters to server...');
-                socket.emit('connectTransport', {
+                socket.emit('connectSendTransport', {
                     transportId: sendTransport.id,
                     dtlsParameters,
                 });
@@ -159,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Step 3: DTLS handshake
             recvTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
                 console.log('Sending DTLS parameters for recv transport...');
-                socket.emit('connectTransport', {
+                socket.emit('connectRecvTransport', {
                     transportId: recvTransport.id,
                     dtlsParameters,
                 });

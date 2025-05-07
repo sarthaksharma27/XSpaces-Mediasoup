@@ -2,8 +2,8 @@ import mediasoup from 'mediasoup';
 
 let worker;
 let router;
-const transports = new Map(); // Stores WebRTC transports by socket ID
-const producers = new Map();  // Stores producers by socket ID
+const transports = new Map(); // Stores WebRTC transports by socket ID and type
+const producers = new Map();  // Stores producers by space ID
 
 // Initialize Mediasoup worker and router
 const createMediasoupWorker = async () => {
@@ -76,10 +76,10 @@ const createWebRtcTransport = async (socket, transportType) => {
 
 // Connect DTLS to a transport
 const connectTransport = async (socket, transportId, dtlsParameters) => {
-  const transport = transports.get(socket.id);
+  const transport = getTransportById(transportId);
   if (!transport) {
     console.error('Transport not found');
-    return;
+    return socket.emit('transportConnectError', 'Transport not found');
   }
 
   try {
@@ -92,8 +92,8 @@ const connectTransport = async (socket, transportId, dtlsParameters) => {
 };
 
 // Create a producer from client's media track
-const handleProducer = async (socket, transportId, kind, rtpParameters, appData) => {
-  const transport = transports.get(socket.id);
+const handleProducer = async (socket, transportId, kind, rtpParameters, appData, spaceId) => {
+  const transport = getTransportById(transportId);
   if (!transport) {
     console.error('Transport not found for producing');
     return;
@@ -101,7 +101,7 @@ const handleProducer = async (socket, transportId, kind, rtpParameters, appData)
 
   try {
     const producer = await transport.produce({ kind, rtpParameters, appData });
-    producers.set(socket.id, producer);
+    producers.set(spaceId, producer);  // store producer by spaceId
     socket.emit('producerCreated', { id: producer.id });
   } catch (err) {
     console.error('Error creating producer:', err);
@@ -117,9 +117,23 @@ const getTransportById = (transportId) => {
   return null;
 };
 
+// Lookup by socket and type
+const getTransportBySocket = (socketId, type) => {
+  return transports.get(`${socketId}_${type}`) || null;
+};
+
 // Add producer reference
-const addProducer = (socketId, producer) => {
-  producers.set(socketId, producer);
+const addProducer = (spaceId, producer) => {
+  producers.set(spaceId, producer);
+};
+
+const getProducerBySpaceId = (spaceId) => {
+  const producer = producers.get(spaceId);
+  if (!producer) {
+    console.error(`No producer found for space: ${spaceId}`);
+    return null;
+  }
+  return producer;
 };
 
 export {
@@ -129,5 +143,8 @@ export {
   connectTransport,
   handleProducer,
   getTransportById,
+  getTransportBySocket,
   addProducer,
+  getProducerBySpaceId,
+  router,
 };

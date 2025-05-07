@@ -101,6 +101,10 @@
       <% } %>      
 
       <script>
+        const spaceId = "<%= space.id %>";
+        socket.emit('join-space', { spaceId });
+      </script>
+      <script>
         window.IS_HOST = <%- JSON.stringify(user.id === host.id) %>;
       </script>      
     <script src="/js/mediasoup-client.bundle.js"></script>

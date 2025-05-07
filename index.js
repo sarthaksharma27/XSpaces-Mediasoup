@@ -1,3 +1,6 @@
+const socketToSpaceMap = new Map(); 
+
+// Imports
 import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
@@ -16,6 +19,9 @@ import {
   handleProducer,
   getTransportById,
   addProducer,
+  getProducerBySpaceId,
+  getTransportBySocket,
+  router
 } from './mediasoupServer.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -52,6 +58,14 @@ app.use('/profile', restrictToLoggedinUserOnly, profileRouter);
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
+  socket.on('join-space', ({ spaceId }) => {
+    if (!spaceId) {
+      return socket.emit('error', 'Missing space ID');
+    }
+    socketToSpaceMap.set(socket.id, spaceId);
+    console.log(`Socket ${socket.id} joined space ${spaceId}`);
+  });
+
   // Step 1: Send RTP Capabilities
   socket.emit('routerRtpCapabilities', getRouterRtpCapabilities());
 
@@ -63,7 +77,7 @@ io.on('connection', (socket) => {
   });
 
   // Step 3: Handle DTLS connection
-  socket.on('connectTransport', async ({ transportId, dtlsParameters }) => {
+  socket.on('connectSendTransport', async ({ transportId, dtlsParameters }) => {
     const transport = getTransportById(transportId);
     if (!transport) {
       return socket.emit('transportConnectError', 'Transport not found');
@@ -82,28 +96,22 @@ io.on('connection', (socket) => {
   // Step 4: Handle track production
   socket.on('produce', async ({ transportId, kind, rtpParameters, appData }, callback) => {
     console.log('Received produce request');
-
-    const transport = getTransportById(transportId);
-    if (!transport) {
-      console.error('Transport not found for produce');
-      return;
+    const spaceId = socketToSpaceMap.get(socket.id); 
+    if (!spaceId) {
+      return socket.emit('produceError', 'You must join a space first');
     }
 
-    try {
-      const producer = await transport.produce({ kind, rtpParameters, appData });
-      console.log('Producer created:', producer.id);
-
-      addProducer(socket.id, producer);
+    await handleProducer(socket, transportId, kind, rtpParameters, appData, spaceId);
+    const producer = getProducerBySpaceId(spaceId);
+    if (producer) {
       callback({ id: producer.id });
-    } catch (error) {
-      console.error('Error creating producer:', error);
     }
   });
 
-  // Here is the conusmer code //////////////////////////////////////////////////////////////
+  // Here is the consumer code //////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////
 
-  // Step 2: Create send transport
+  // Step 2: Create recv transport
   socket.on('createRecvTransport', async () => {
     console.log('Client requested recv transport');
     await createWebRtcTransport(socket, 'recv'); 
@@ -111,8 +119,8 @@ io.on('connection', (socket) => {
   });
 
   // Step 3: DTLS handshake for recvTransport (Consumer Side)
-  socket.on('connectTransport', async ({ transportId, dtlsParameters }) => {
-  const transport = getTransportById(transportId);
+  socket.on('connectRecvTransport', async ({ transportId, dtlsParameters }) => {
+    const transport = getTransportById(transportId);
   
     if (!transport) {
         console.error('Transport not found for ID:', transportId);
@@ -122,7 +130,6 @@ io.on('connection', (socket) => {
     try {
         await transport.connect({ dtlsParameters });
         console.log('Transport connected via DTLS:', transportId);
-
         socket.emit('transportConnected');
     } catch (err) {
         console.error('Transport connection failed:', err);
@@ -130,11 +137,44 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Step 4: Handle consumer logic
+  socket.on('consume', async ({ rtpCapabilities }) => {
+    const spaceId = socketToSpaceMap.get(socket.id); 
+    const producer = getProducerBySpaceId(spaceId);
+    console.log("Hello this is sarthak", producer);
+    
 
+    if (!producer) {
+      return socket.emit('consumeError', 'No producer available');
+    }
+
+    if (!router.canConsume({ producerId: producer.id, rtpCapabilities })) {
+      return socket.emit('consumeError', 'Cannot consume');
+    }
+
+    const transport = getTransportBySocket(socket.id, 'recv'); // ✅ use helper for correct transport
+    if (!transport) {
+      return socket.emit('consumeError', 'Receive transport not found');
+    }
+
+    const consumer = await transport.consume({
+      producerId: producer.id,
+      rtpCapabilities,
+      paused: false,
+    });
+
+    socket.emit('consumeSuccess', {
+      id: consumer.id,
+      producerId: producer.id,
+      kind: consumer.kind,
+      rtpParameters: consumer.rtpParameters,
+    });
+  });
 
   // Cleanup on disconnect
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    socketToSpaceMap.delete(socket.id); // clean up map
   });
 
 });
