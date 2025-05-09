@@ -184,22 +184,56 @@ document.addEventListener('DOMContentLoaded', function () {
 
         socket.on('consumeSuccess', async ({ id, producerId, kind, rtpParameters }) => {
             console.log('Consumer parameters received from server');
-
+        
             const consumer = await recvTransport.consume({
                 id,
                 producerId,
                 kind,
                 rtpParameters,
             });
-
+        
+            const track = consumer.track;
+        
+            // 🧠 Real-time audio analysis (inline)
+            const audioContext = new AudioContext();
+            const stream = new MediaStream([track]);
+            const sourceNode = audioContext.createMediaStreamSource(stream);
+            const analyser = audioContext.createAnalyser();
+        
+            sourceNode.connect(analyser);
+            analyser.fftSize = 2048;
+        
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+        
+            function analyze() {
+                analyser.getByteFrequencyData(dataArray);
+        
+                // Volume (amplitude) estimation
+                const average = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+                console.log('🔊 Volume (avg amplitude):', average.toFixed(2));
+        
+                // Dominant frequency estimation (basic pitch)
+                const sampleRate = audioContext.sampleRate;
+                const maxIndex = dataArray.reduce((best, val, i, arr) => val > arr[best] ? i : best, 0);
+                const dominantFreq = maxIndex * sampleRate / analyser.fftSize;
+                console.log('🎵 Estimated pitch (Hz):', dominantFreq.toFixed(2));
+        
+                requestAnimationFrame(analyze);
+            }
+        
+            analyze();
+        
+            // 🔊 Play audio from producer
             const audioElement = document.createElement('audio');
-            audioElement.srcObject = new MediaStream([consumer.track]);
+            audioElement.srcObject = stream;
             audioElement.autoplay = true;
             audioElement.playsInline = true;
             document.body.appendChild(audioElement);
-
-            console.log('Audio is playing from producer');
+        
+            console.log('🔈 Audio is playing from producer');
         });
+        
 
         socket.on('consumeError', (err) => {
             console.error('Error consuming:', err);

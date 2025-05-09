@@ -141,7 +141,7 @@ io.on('connection', (socket) => {
   socket.on('consume', async ({ rtpCapabilities }) => {
     const spaceId = socketToSpaceMap.get(socket.id); 
     const producer = getProducerBySpaceId(spaceId);
-    console.log("Hello this is sarthak", producer);
+    // console.log("Hello this is sarthak", producer);
     
 
     if (!producer) {
