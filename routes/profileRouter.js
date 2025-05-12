@@ -26,7 +26,7 @@ router.delete('/delete', async (req, res) => {
         where: { id: userId },
       });
   
-      res.render('signup');
+      res.render('index');
     } catch (error) {
       console.error(error);
       res.status(500).send('Something went wrong while deleting your account.');
