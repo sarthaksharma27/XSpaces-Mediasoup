@@ -12,7 +12,7 @@ async function handleUserSignup(req, res) {
         },
     });
 
-    return res.render("login");
+    res.render("login");
 }
 
 async function handleUserLogin(req, res) {
